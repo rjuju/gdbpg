@@ -256,6 +256,16 @@ def format_node(node, indent=0):
 
 		retval = format_bool_expr(node)
 
+	elif is_a(node, 'AppendRelInfo'):
+
+		node = cast(node, 'AppendRelInfo')
+
+		retval = 'AppendRelInfo (parent_relid=%(parent_relid)s child_relid=%(child_relid)s parent_reloid=%(parent_reloid)s)' % {
+				'parent_relid' : node['parent_relid'],
+				'child_relid' : node['child_relid'],
+				'parent_reloid' : node['parent_reloid']
+			}
+
 	else:
 		# default - just print the type name
 		retval = format_type(type_str)
@@ -275,8 +285,11 @@ def format_planner_info(info, indent=0):
 %(rel)s
 rte:
 %(rte)s
+append_rel_list:
+%(arl)s
 ''' % {'rel' : format_node_array(info['simple_rel_array'], 1, int(info['simple_rel_array_size'])),
-	   'rte' : format_node_array(info['simple_rte_array'], 1, int(info['simple_rel_array_size']))}
+	   'rte' : format_node_array(info['simple_rte_array'], 1, int(info['simple_rel_array_size'])),
+	   'arl' : format_node_list(info['append_rel_list'], 1, True)}
 
 	return add_indent(retval, indent)
 
