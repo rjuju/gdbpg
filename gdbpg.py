@@ -252,7 +252,7 @@ def format_node(node, indent=0):
 
 		node = cast(node, 'BoolExpr')
 
-		print node
+		print(node)
 
 		retval = format_bool_expr(node)
 
@@ -291,7 +291,7 @@ def format_planned_stmt(plan, indent=0):
    can set tag: %(can_set_tag)s
      transient: %(transient)s
   row security: %(row_security)s
-               
+
      plan tree: %(tree)s
    range table:
 %(rtable)s
@@ -372,15 +372,15 @@ class PgPrintCommand(gdb.Command):
 
 		arg_list = gdb.string_to_argv(arg)
 		if len(arg_list) != 1:
-			print "usage: pgprint var"
+			print("usage: pgprint var")
 			return
 
 		l = gdb.parse_and_eval(arg_list[0])
 
 		if not is_node(l):
-			print "not a node type"
+			print("not a node type")
 
-		print format_node(l)
+		print(format_node(l))
 
 
 PgPrintCommand()
