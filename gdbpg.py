@@ -182,6 +182,18 @@ def format_node(node, indent=0):
 				'levelsup' : node['varlevelsup']
 			}
 
+	elif is_a(node, 'Const'):
+
+		# we assume the list contains Node instances (probably safe for Plan fields)
+		node = cast(node, 'Const')
+
+		retval = 'Const (consttype=%(type)s consttypmod=%(typmod)s constlen=%(len)s (raw)constvalue=%(value)s)' % {
+				'type' : node['consttype'],
+				'typmod' : node['consttypmod'],
+				'len' : node['constlen'],
+				'value' : node['constvalue']
+			}
+
 	elif is_a(node, 'RangeTblRef'):
 
 		node = cast(node, 'RangeTblRef')
@@ -192,14 +204,17 @@ def format_node(node, indent=0):
 
 		node = cast(node, 'RelOptInfo')
 
-		retval = 'RelOptInfo (kind=%(kind)s relids=%(relids)s rtekind=%(rtekind)s relid=%(relid)s rows=%(rows)s width=%(width)s nparts=%(nparts)s' % {
+		retval = '''RelOptInfo (kind=%(kind)s relids=%(relids)s rtekind=%(rtekind)s relid=%(relid)s rows=%(rows)s width=%(width)s nparts=%(nparts)s
+baserestrictinfo:
+%(baserestrictinfo)s''' % {
 				'kind' : node['reloptkind'],
 				'rows' : node['rows'],
 				'width' : node['reltarget']['width'],
 				'relid' : node['relid'],
 				'relids' : format_relids(node['relids']),
 				'rtekind' : node['rtekind'],
-				'nparts' : node['nparts']
+				'nparts' : node['nparts'],
+				'baserestrictinfo' : format_node(node['baserestrictinfo'], True),
 			}
 
 	elif is_a(node, 'RangeTblEntry'):
