@@ -90,7 +90,7 @@ def format_oid_list(lst, indent=0):
 	return add_indent(str(tlist), indent)
 
 
-def format_node_list(lst, indent=0, newline=False):
+def format_node_list(lst, indent=0, newline=False, kind='node'):
 	'format list containing Node values'
 
 	# handle NULL pointer (for List we return NIL)
@@ -104,12 +104,23 @@ def format_node_list(lst, indent=0, newline=False):
 	# walk the list until we reach the last item
 	while str(item) != '0x0':
 
-		# we assume the list contains Node instances, so grab a reference
-		# and cast it to (Node*)
-		node = cast(item['data']['ptr_value'], 'Node')
+		if (kind == 'node'):
+			# we assume the list contains Node instances, so grab a reference
+			# and cast it to (Node*)
+			node = cast(item['data']['ptr_value'], 'Node')
 
-		# append the formatted Node to the result list
-		tlist.append(format_node(node))
+			# append the value to the result list
+			tlist.append(format_node(node))
+		elif (kind == 'oid'):
+			val = (int(item['data']['oid_value']))
+
+			# append the formatted Node to the result list
+			tlist.append(val)
+		else:
+			val = (int(item['data']['int_value']))
+
+			# append the value to the result list
+			tlist.append(val)
 
 		# next item
 		item = item['next']
@@ -239,6 +250,14 @@ baserestrictinfo:
 
 		retval = format_node_list(node, 0, True)
 
+	elif is_a(node, 'OidList'):
+
+		retval = format_node_list(node, 0, False, 'oid')
+
+	elif is_a(node, 'IntList'):
+
+		retval = format_node_list(node, 0, False, 'int')
+
 	elif is_a(node, 'Plan'):
 
 		retval = format_plan_tree(node)
@@ -279,6 +298,37 @@ baserestrictinfo:
 				'parent_relid' : node['parent_relid'],
 				'child_relid' : node['child_relid'],
 				'parent_reloid' : node['parent_reloid']
+			}
+
+	elif is_a(node, 'EquivalenceMember'):
+
+		node = cast(node, 'EquivalenceMember')
+
+		retval = 'EquivalenceMember (em_expr=%(em_expr)s em_is_const=%(em_is_const)s em_is_child=%(em_is_child)s em_datatype=%(em_datatype)s)' % {
+				'em_expr' : format_node(node['em_expr']),
+				'em_is_const' : (int(node['em_is_const']) == 1),
+				'em_is_child' : (int(node['em_is_child']) == 1),
+				'em_datatype' : node['em_datatype']
+			}
+
+	elif is_a(node, 'EquivalenceClass'):
+
+		node = cast(node, 'EquivalenceClass')
+
+		retval = format_equivalence_class(node, indent)
+
+	elif is_a(node, 'PathKey'):
+
+		node = cast(node, 'PathKey')
+
+		retval = '''Pathkey
+pk_eclass:
+%(pk_eclass)s
+pk_opfamily=%(pk_opfamily)s pk_strategy=%(pk_strategy)s pk_nulls_first=%(pk_nulls_first)s)''' % {
+				'pk_eclass' : format_node(node['pk_eclass'], 1),
+				'pk_opfamily' : node['pk_opfamily'],
+				'pk_strategy' : node['pk_strategy'],
+				'pk_nulls_first' : (int(node['pk_nulls_first'] == 1)),
 			}
 
 	else:
@@ -357,6 +407,28 @@ def format_bool_expr(node, indent=0):
 %(clauses)s""" % {	'op' : node['boolop'],
 					'clauses' : format_node_list(node['args'], 1, True)}
 
+def format_equivalence_class(node, indent=0):
+
+	retval = '''EquivalenceClass (ec_opfamilies=%(ec_opfamilies)s ec_collation=%(ec_collation)s
+ec_members=%(ec_members)s
+ec_sources=%(ec_sources)s ec_derives=%(ec_derives)s ec_has_const=%(ec_has_const)s ec_has_volatile=%(ec_has_volatile)s
+ec_below_outer_join=%(ec_below_outer_join)s ec_broken=%(ec_broken)s ec_sortref=%(ec_sortref)s
+ec_min_security=%(ec_min_security)s ec_max_security=%(ec_max_security)s)''' % {
+				'ec_opfamilies' : format_node(node['ec_opfamilies']),
+				'ec_collation' : node['ec_collation'],
+				'ec_members' : "\n" + format_node(node['ec_members'], 1),
+				'ec_sources' : format_node(node['ec_sources']),
+				'ec_derives' : format_node(node['ec_derives']),
+				'ec_has_const' : (int(node['ec_has_const'] == 1)),
+				'ec_has_volatile' : (int(node['ec_has_volatile'] == 1)),
+				'ec_below_outer_join' : (int(node['ec_below_outer_join'] == 1)),
+				'ec_broken' : (int(node['ec_broken'] == 1)),
+				'ec_sortref' : node['ec_sortref'],
+				'ec_min_security' : node['ec_min_security'],
+				'ec_max_security' : node['ec_max_security']
+			}
+
+	return retval
 def is_a(n, t):
 	'''checks that the node has type 't' (just like IsA() macro)'''
 
