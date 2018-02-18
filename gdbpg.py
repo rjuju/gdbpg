@@ -331,6 +331,16 @@ pk_opfamily=%(pk_opfamily)s pk_strategy=%(pk_strategy)s pk_nulls_first=%(pk_null
 				'pk_nulls_first' : (int(node['pk_nulls_first'] == 1)),
 			}
 
+	elif is_a(node, 'PartitionedChildRelInfo'):
+
+		node = cast(node, 'PartitionedChildRelInfo')
+
+		retval = 'PartitionedChildRelInfo (parent_relid=%(parent_relid)s) child_rels=%(child_rels)s part_cols_updated=%(part_cols_updated)s' % {
+			'parent_relid' : node['parent_relid'],
+			'child_rels' : format_node(node['child_rels']),
+			'part_cols_updated' : (int(node['part_cols_updated']) == 1)
+                }
+
 	else:
 		# default - just print the type name
 		retval = format_type(type_str)
